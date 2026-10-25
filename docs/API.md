@@ -25,7 +25,7 @@ All examples execute on the Roblox client. `Aurelis` is the object returned by t
 ```lua
 local Window = Aurelis:CreateWindow({
     Title = "Aurelis", Subtitle = "Universal Workspace",
-    Size = UDim2.fromOffset(720, 480), MinimumSize = Vector2.new(520, 340),
+    Size = UDim2.fromOffset(600, 380), MinimumSize = Vector2.new(320, 240),
     Acrylic = true, Blur = true, Theme = "Eclipse",
     ToggleKey = Enum.KeyCode.RightShift, StatusBar = true,
 })
@@ -47,7 +47,9 @@ local Window = Aurelis:CreateWindow({
 | `ToggleSidebar(boolean?)` | Open/close mobile drawer |
 | `Destroy()` | Permanent teardown |
 
-Drag the title area and resize from the lower-right hitbox with mouse or touch. Double-click/tap the title area to maximize/restore. Drag to the top edge to maximize, or to a side edge to snap. Minimum size yields to the actual available viewport on small devices. Breakpoints are desktop ≥700 px, compact 500–699 px and mobile <500 px, using the available viewport/window width. Content rows reflow when their available width drops below 380 px.
+Windows start at 600×380 px by default, with a 320×240 px minimum. Initial size is capped to about 82% of the available viewport, subject to the configured minimum and viewport bounds, leaving room to drag on phones. Resize and maximize remain available.
+
+Drag the title text or empty title area and resize from the lower-right hitbox with mouse or touch. Double-click/tap the title area to maximize/restore. Mouse drags to the top edge maximize; mouse drags to a side edge snap. Touch drags preserve the current size when released near an edge; use the maximize button or double-tap the title when needed. Minimum size yields to the actual available viewport on small devices. Breakpoints are desktop ≥700 px, compact 500–699 px and mobile <500 px, using the available viewport/window width. Content rows reflow when their available width drops below 380 px.
 
 `Window.PageChanged:Connect(function(page))` observes navigation. `SelectedPage`, `Visible`, `Minimized`, `Maximized`, `Closed`, and `Destroyed` expose current state. `Window.Maid:Give(resource)` ties integrating code's resources to the window lifecycle.
 

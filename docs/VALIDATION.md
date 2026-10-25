@@ -6,7 +6,7 @@ Checked on 2026-10-25 with the official Luau 0.744 Linux CLI.
 | --- | --- |
 | Framework source | 49 modules compiled |
 | Sources + examples + generated Lua distributions | 54 files compiled |
-| Behavioral/lifecycle contracts | 29 passed, 0 failed |
+| Behavioral/lifecycle contracts | 32 passed, 0 failed |
 | Distribution reproducibility | Generated bundle/model contents match source |
 | Lifecycle accounting | Owned tracked resources/connections return to baseline after destruction |
 | Stress construction | 150 controls, 10 tabs, 30 sections; typed state and config paths checked |
@@ -14,7 +14,7 @@ Checked on 2026-10-25 with the official Luau 0.744 Linux CLI.
 | Android/Delta/device renderer | Not executed in this build environment |
 | GPU/FPS target certification | Not measured; no 60 FPS claim is made from mocks |
 
-The deterministic headless harness executes real framework code against test services and input/property events. It covers reactive dependencies, disconnect-safe signals, cleanup, slider rounding, false-valued flags, every value component, dropdown replacement/keyboard selection, validation, keybind modes, typed config round trips, invalid/future schemas, theme mutation without reconstruction, color popup lifecycle, nested search reveal, notification history, modal focus/callback chaining, multiple windows, mobile bounds/scale, demand-driven monitoring, constructor rollback, overlapping tween properties and the touch restore dock. Its layout model is intentionally limited; it is not the Roblox renderer or a substitute for device QA.
+The deterministic headless harness executes real framework code against test services and input/property events. It covers reactive dependencies, disconnect-safe signals, cleanup, slider rounding, false-valued flags, every value component, dropdown replacement/keyboard selection, validation, keybind modes, typed config round trips, invalid/future schemas, theme mutation without reconstruction, color popup lifecycle, nested search reveal, notification history, modal focus/callback chaining, multiple windows, mobile bounds/scale, demand-driven monitoring, constructor rollback, overlapping tween properties the touch restore dock, real pointer-event mouse/touch drag lifecycles, title-button hit separation, and compact phone startup geometry. Its layout model is intentionally limited; it is not the Roblox renderer or a substitute for device QA.
 
 ## Reproduce
 

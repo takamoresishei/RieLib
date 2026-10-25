@@ -638,6 +638,81 @@ test("layout notifications converge and sections measure their content", functio
         expect(section.Root.Size.Y.Offset > 44)
     end)
 end)
+test("title hit target drags with mouse and releases its pointer", function()
+    workspace(function(app, window)
+        local origin = window._position
+        local point = window.Root.AbsolutePosition + Vector2.new(70, 22)
+        expect(app.Input:Contains(window.DragHandle, point), "Title text is outside drag hit target")
+        local searchPoint = window.SearchButton.AbsolutePosition + Vector2.new(8, 8)
+        expect(not app.Input:Contains(window.DragHandle, searchPoint), "Drag target covers a title button")
+        local down = {
+            UserInputType = Enum.UserInputType.MouseButton1,
+            KeyCode = Enum.KeyCode.Unknown,
+            Position = Vector3.new(point.X, point.Y, 0),
+        }
+        window.DragHandle.InputBegan:Fire(down)
+        services.UserInputService.InputChanged:Fire({
+            UserInputType = Enum.UserInputType.MouseMovement,
+            Position = Vector3.new(point.X + 80, point.Y + 40, 0),
+        })
+        equal(window._position, origin + Vector2.new(80, 40))
+        down.Position = Vector3.new(point.X + 80, point.Y + 40, 0)
+        services.UserInputService.InputEnded:Fire(down)
+        expect(app.Input._pointer == nil)
+        local stopped = window._position
+        services.UserInputService.InputChanged:Fire({
+            UserInputType = Enum.UserInputType.MouseMovement,
+            Position = Vector3.new(point.X + 120, point.Y + 80, 0),
+        })
+        equal(window._position, stopped, "Window moved after mouse release")
+    end)
+end)
+test("touch dragging tracks one finger at scale and keeps compact size at edges", function()
+    workspace(function(app, window)
+        window:SetScale(0.8)
+        local origin, size = window._position, window._size
+        local point = window.Root.AbsolutePosition + Vector2.new(70, 18)
+        local touch = {
+            UserInputType = Enum.UserInputType.Touch,
+            KeyCode = Enum.KeyCode.Unknown,
+            Position = Vector3.new(point.X, point.Y, 0),
+        }
+        window.DragHandle.InputBegan:Fire(touch)
+        services.UserInputService.InputChanged:Fire({
+            UserInputType = Enum.UserInputType.Touch,
+            Position = Vector3.new(point.X + 160, point.Y + 80, 0),
+        })
+        equal(window._position, origin, "A second finger moved the window")
+        touch.Position = Vector3.new(point.X + 40, point.Y + 24, 0)
+        services.UserInputService.InputChanged:Fire(touch)
+        equal(window._position, origin + Vector2.new(50, 30))
+        touch.Position = Vector3.new(2, 2, 0)
+        services.UserInputService.InputChanged:Fire(touch)
+        services.UserInputService.InputEnded:Fire(touch)
+        equal(window._size, size)
+        expect(not window.Maximized, "A touch drag unexpectedly maximized the window")
+        expect(app.Input._pointer == nil)
+    end)
+end)
+test("compact startup leaves drag room on phone portrait and landscape viewports", function()
+    workspace(function(app)
+        local previous = Mock.viewport
+        local ok, message = pcall(function()
+            Mock.viewport = Vector2.new(844, 390)
+            local window = app:CreateWindow({ Title = "Phone" })
+            expect(window._size.X <= 600 and window._size.Y <= 319)
+            expect(window._position.Y > 8, "Landscape window leaves no vertical drag room")
+            Mock.viewport = Vector2.new(390, 760)
+            app.Root:GetPropertyChangedSignal("AbsoluteSize"):Fire()
+            expect(window._size.X <= 320)
+            expect(window.Root.AbsoluteSize.X + window.Root.AbsolutePosition.X <= 382)
+        end)
+        Mock.viewport = previous
+        if not ok then
+            error(message)
+        end
+    end)
+end)
 print(string.format("\n%d passed; %d failed", passed, failed))
 if failed > 0 then
     error("Aurelis test failures: " .. failed)

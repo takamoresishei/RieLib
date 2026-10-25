@@ -42,7 +42,7 @@ function Window.new(app, options)
         Destroyed = false,
         DrawerOpen = false,
         Scale = 1,
-        MinimumSize = options.MinimumSize or Vector2.new(520, 340),
+        MinimumSize = options.MinimumSize or Vector2.new(320, 240),
         ToggleKey = options.ToggleKey or Enum.KeyCode.RightShift,
     }, Window)
     self.Window = self
@@ -52,9 +52,10 @@ function Window.new(app, options)
     self.Maid:Give(self.Theme)
     local viewport = app.Root.AbsoluteSize
     self._pendingCenter = viewport.X < 1 or viewport.Y < 1
-    local given = options.Size or UDim2.fromOffset(720, 480)
+    local given = options.Size or UDim2.fromOffset(600, 380)
     self._size =
         Vector2.new(given.X.Offset + given.X.Scale * viewport.X, given.Y.Offset + given.Y.Scale * viewport.Y)
+    self._size = Responsive.initialSize(self._size, viewport, self.MinimumSize)
     self._position = Vector2.new(
         (viewport.X - self._size.X) / 2 + #app.Windows * 22,
         (viewport.Y - self._size.Y) / 2 + #app.Windows * 22
@@ -139,6 +140,15 @@ function Window.new(app, options)
         TextSize = 10,
         TextTruncate = Enum.TextTruncate.AtEnd,
     }, "TextMuted")
+    -- Capture the title and subtitle area above decorative labels without covering window buttons.
+    self.DragHandle = Gui.new(self, "TextButton", {
+        Name = "DragHandle",
+        Position = UDim2.fromOffset(44, 0),
+        Size = UDim2.new(1, -218, 1, 0),
+        Active = true,
+        Selectable = false,
+        ZIndex = 3,
+    }, nil, self.Titlebar)
     local function titleButton(icon, offset, callback)
         local button = Gui.button(
             self,
@@ -276,41 +286,48 @@ function Window.new(app, options)
             self:_geometry()
         end)
     end))
-    local lastClick = -math.huge
-    self.Maid:Give(self.Titlebar.InputBegan:Connect(function(input)
+    local lastClick, lastPoint = -math.huge, nil
+    self.Maid:Give(self.DragHandle.InputBegan:Connect(function(input)
         if
             input.UserInputType ~= Enum.UserInputType.MouseButton1
             and input.UserInputType ~= Enum.UserInputType.Touch
         then
             return
         end
-        if app.Modal.Active then
+        if app.Modal.Active or not self.Visible then
             return
         end
         local point = app.Input:Position(input)
-        if point.X > self.Root.AbsolutePosition.X + self.Root.AbsoluteSize.X - 174 * self.Scale then
-            return
-        end
-        if app.Input:Contains(self.Logo, point) then
-            return
-        end
         self:Focus()
         local now = os.clock()
-        if now - lastClick < 0.3 then
-            lastClick = 0
+        if lastPoint and now - lastClick < 0.3 and (point - lastPoint).Magnitude <= 12 then
+            lastClick, lastPoint = -math.huge, nil
             self:Maximize()
             return
         end
-        lastClick = now
+        lastClick, lastPoint = -math.huge, nil
         if self.Maximized then
             self:Restore()
         end
         local start = app.Input:Position(input)
         local origin = self._position
+        local moved = false
         app.Input:Track(self, input, function(position)
+            if not moved and (position - start).Magnitude < 4 then
+                return
+            end
+            moved = true
             self._position = origin + (position - start) / self.Scale
             self:_geometry()
         end, function(position)
+            if not moved then
+                lastClick, lastPoint = os.clock(), position
+                return
+            end
+            -- Touch drags keep their compact size; desktop edge snapping remains available.
+            if input.UserInputType == Enum.UserInputType.Touch then
+                return
+            end
             local screen = app.Root.AbsoluteSize
             if position.Y < 16 then
                 self:Maximize()
@@ -322,6 +339,10 @@ function Window.new(app, options)
         end)
     end))
     self.Maid:Give(app.Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        if not self.Maximized then
+            self._size =
+                Responsive.initialSize(self._size, app.Root.AbsoluteSize / self.Scale, self.MinimumSize)
+        end
         self:_geometry()
     end))
     self.Maid:Give(self.Root:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
@@ -365,6 +386,7 @@ function Window:_geometry()
     end
     if self._pendingCenter then
         self._pendingCenter = false
+        self._size = Responsive.initialSize(self._size, viewport, self.MinimumSize)
         self._position = (viewport - self._size) / 2
     end
     if self.Maximized then
