@@ -1,0 +1,14 @@
+{
+  "name": "AurelisShowcase",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Aurelis": { "$path": "Aurelis" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "AurelisShowcase": { "$path": "examples/Showcase.client.lua" }
+      }
+    }
+  }
+}
